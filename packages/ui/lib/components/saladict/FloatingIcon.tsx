@@ -11,7 +11,7 @@ export const FloatingIcon = ({ position, visible, onClick }: FloatingIconProps) 
   <button
     type="button"
     className={cn(
-      'fixed z-[2147483647] flex h-8 w-8 items-center justify-center',
+      'absolute z-[2147483647] flex h-8 w-8 items-center justify-center',
       'bg-saladict-500 rounded-full text-white shadow-lg',
       'transition-all duration-150 ease-out',
       'hover:bg-saladict-600 hover:scale-110',

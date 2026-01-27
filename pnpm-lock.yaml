@@ -267,6 +267,9 @@ importers:
       react-error-boundary:
         specifier: ^6.0.0
         version: 6.0.0(react@19.1.1)
+      zustand:
+        specifier: ^5.0.2
+        version: 5.0.10(@types/react@19.1.12)(react@19.1.1)
     devDependencies:
       '@extension/storage':
         specifier: workspace:*

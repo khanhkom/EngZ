@@ -91,7 +91,7 @@ export const InlinePanel = ({
     <Card
       ref={panelRef}
       className={cn(
-        'fixed z-[2147483646] max-h-[500px] w-[380px] overflow-hidden',
+        'absolute z-[2147483646] max-h-[500px] w-[380px] overflow-hidden',
         'border-gray-200 shadow-xl',
         'animate-scale-in',
       )}

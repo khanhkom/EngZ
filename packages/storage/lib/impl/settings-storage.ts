@@ -1,4 +1,5 @@
 import { createStorage, StorageEnum } from '../base/index.js';
+import type { BaseStorageType } from '../base/index.js';
 
 type TargetLanguage = 'vi' | 'en' | 'ja' | 'ko' | 'zh' | 'fr' | 'de' | 'es';
 type DefaultDictionary = 'google' | 'bing' | 'cambridge';
@@ -13,14 +14,10 @@ interface SettingsState {
   showFloatingIcon: boolean;
 }
 
-interface SettingsStorageType {
-  get: () => Promise<SettingsState>;
-  set: (value: SettingsState | ((prev: SettingsState) => SettingsState)) => Promise<void>;
-  subscribe: (callback: () => void) => () => void;
-  getSnapshot: () => SettingsState | null;
+type SettingsStorageType = BaseStorageType<SettingsState> & {
   updateSetting: <K extends keyof SettingsState>(key: K, value: SettingsState[K]) => Promise<void>;
   resetToDefaults: () => Promise<void>;
-}
+};
 
 const DEFAULT_SETTINGS: SettingsState = {
   targetLanguage: 'vi',
