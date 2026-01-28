@@ -50,28 +50,6 @@ export const InlinePanel = ({
     };
   }, [visible, onClose]);
 
-  // Stop native events from propagating to document listeners
-  // React synthetic events don't fully prevent native event bubbling in Shadow DOM
-  useEffect(() => {
-    const panel = panelRef.current;
-    if (!panel || !visible) return;
-
-    const stopNativePropagation = (e: Event) => {
-      e.stopPropagation();
-    };
-
-    // Use bubble phase (default) so child elements can still receive clicks
-    panel.addEventListener('mouseup', stopNativePropagation);
-    panel.addEventListener('mousedown', stopNativePropagation);
-    panel.addEventListener('click', stopNativePropagation);
-
-    return () => {
-      panel.removeEventListener('mouseup', stopNativePropagation);
-      panel.removeEventListener('mousedown', stopNativePropagation);
-      panel.removeEventListener('click', stopNativePropagation);
-    };
-  }, [visible]);
-
   // Calculate position to stay within viewport
   useEffect(() => {
     if (!visible || !panelRef.current) return;

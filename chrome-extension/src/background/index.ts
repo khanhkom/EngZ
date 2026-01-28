@@ -1,4 +1,17 @@
 import 'webextension-polyfill';
+import { fetchAllDictionaries } from '@extension/shared';
+
+// Message handler for dictionary fetching (bypasses CORS)
+chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+  if (message.type === 'SALADICT_FETCH_DICTIONARIES') {
+    const { word, targetLang } = message.payload;
+    fetchAllDictionaries(word, targetLang)
+      .then(result => sendResponse({ success: true, data: result }))
+      .catch(error => sendResponse({ success: false, error: error.message }));
+    return true; // Keep the message channel open for async response
+  }
+  return false;
+});
 
 // Context Menu Setup
 const setupContextMenu = () => {

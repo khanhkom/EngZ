@@ -1,7 +1,37 @@
 import { fetchAllDictionaries } from '../dictionaries/index.js';
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
+import type { FetchAllResults, FetchAllErrors } from '../dictionaries/index.js';
 import type { DictionaryResult } from '../dictionaries/types.js';
+
+/**
+ * Fetch dictionaries via background script to bypass CORS
+ * Falls back to direct fetch if background is unavailable
+ */
+const fetchViaBackground = async (
+  word: string,
+  targetLang: string,
+): Promise<{ results: FetchAllResults; errors: FetchAllErrors }> => {
+  try {
+    // Try to fetch via background script (bypasses CORS)
+    const response = await chrome.runtime.sendMessage({
+      type: 'SALADICT_FETCH_DICTIONARIES',
+      payload: { word, targetLang },
+    });
+
+    if (response?.success) {
+      return response.data;
+    } else if (response?.error) {
+      throw new Error(response.error);
+    }
+  } catch {
+    // Background script unavailable, fall back to direct fetch
+    // This works in popup/options pages but not content scripts
+  }
+
+  // Fallback to direct fetch
+  return fetchAllDictionaries(word, targetLang);
+};
 
 export interface DictionaryState {
   currentWord: string;
@@ -51,7 +81,7 @@ export const useDictionaryStore = create<DictionaryState>()(
             lang = settings.targetLanguage;
           }
 
-          const { results, errors } = await fetchAllDictionaries(word, lang || 'vi');
+          const { results, errors } = await fetchViaBackground(word, lang || 'vi');
 
           set({
             results,

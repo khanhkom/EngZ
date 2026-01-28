@@ -25,6 +25,7 @@ export default function App() {
   const [isSaved, setIsSaved] = useState(false);
 
   useEffect(() => {
+    console.log('[Saladict] Content UI mounted');
     const handleSelection = async (e: MouseEvent | KeyboardEvent) => {
       // Ignore if event originated from extension UI
       const path = e.composedPath();
@@ -148,28 +149,42 @@ export default function App() {
   };
 
   const handlePlayAudio = async (source: 'google' | 'bing' | 'cambridge') => {
+    console.log('[Audio] handlePlayAudio called, source:', source, 'results:', results);
     const result = results[source];
     if (result) {
       try {
+        console.log('[Audio] Playing:', result.word, 'lang:', result.detectedLanguage);
         await playAudioWithAutoDetect(result.word, result.detectedLanguage);
+        console.log('[Audio] Played successfully');
       } catch (error) {
-        console.error('Failed to play audio:', error);
+        console.error('[Audio] Failed to play:', error);
       }
+    } else {
+      console.warn('[Audio] No result for source:', source);
     }
   };
 
   const handleSaveWord = async () => {
+    console.log('[Save] handleSaveWord called, activeTab:', activeTab, 'results:', results, 'isSaved:', isSaved);
     const currentResult = results[activeTab];
     if (currentResult && !isSaved) {
-      await addWord({
-        word: currentResult.word,
-        translation: currentResult.translation,
-        pronunciation: currentResult.pronunciation,
-        definition: currentResult.definition,
-        examples: currentResult.examples,
-        source: activeTab,
-      });
-      setIsSaved(true);
+      try {
+        console.log('[Save] Saving word:', currentResult.word);
+        await addWord({
+          word: currentResult.word,
+          translation: currentResult.translation,
+          pronunciation: currentResult.pronunciation,
+          definition: currentResult.definition,
+          examples: currentResult.examples,
+          source: activeTab,
+        });
+        setIsSaved(true);
+        console.log('[Save] Word saved successfully');
+      } catch (error) {
+        console.error('[Save] Failed to save:', error);
+      }
+    } else {
+      console.warn('[Save] Cannot save - no result or already saved');
     }
   };
 
