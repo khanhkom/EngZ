@@ -25,45 +25,32 @@ export default function App() {
   const [isSaved, setIsSaved] = useState(false);
 
   useEffect(() => {
-    console.log('[Saladict] Content UI mounted');
-
     const handleSelection = async (e: MouseEvent | KeyboardEvent) => {
       // Ignore if event originated from extension UI
       const path = e.composedPath();
       const isFromUI = path.some(el => el instanceof HTMLElement && el.hasAttribute('data-saladict-ui'));
-      console.log('[App] handleSelection:', e.type, 'isFromUI:', isFromUI, 'target:', e.target);
-      if (isFromUI) {
-        console.log('[App] handleSelection: Ignoring event from UI');
-        return;
-      }
+      if (isFromUI) return;
 
       const selection = window.getSelection();
       const text = selection?.toString().trim();
-      console.log('[Saladict] Selection detected:', text);
 
       if (text && text.length > 0 && text.length < 100) {
         // Check settings first
         let showIconSetting = true;
         try {
           const settings = await settingsStorage.get();
-          console.log('[Saladict] Settings loaded:', settings);
           // Use nullish coalescing to default to true if undefined
           showIconSetting = settings?.showFloatingIcon ?? true;
-        } catch (error) {
-          console.warn('[Saladict] Failed to load settings, defaulting to true', error);
+        } catch {
+          // Failed to load settings, defaulting to true
         }
 
-        if (!showIconSetting) {
-          console.log('[Saladict] Icon disabled by settings');
-          return;
-        }
+        if (!showIconSetting) return;
 
         const rect = getSelectionRect();
-        console.log('[Saladict] Selection Rect:', rect);
 
         if (rect) {
           const iconPos = calculateIconPosition(rect);
-          console.log('[Saladict] Setting icon position:', iconPos);
           setIconPosition(iconPos);
           setSelectedText(text);
           setShowIcon(true);
@@ -109,23 +96,15 @@ export default function App() {
       // Use composedPath() to handle Shadow DOM correctly
       const path = e.composedPath();
       const isInsideUI = path.some(el => el instanceof HTMLElement && el.hasAttribute('data-saladict-ui'));
-      console.log('[App] handleClickOutside: isInsideUI:', isInsideUI, 'target:', e.target);
-      console.log(
-        '[App] handleClickOutside: composedPath elements with data-saladict-ui:',
-        path.filter(el => el instanceof HTMLElement && el.hasAttribute('data-saladict-ui')),
-      );
 
       if (!isInsideUI) {
         // Don't hide if user just selected text (selection will be handled by handleSelection)
         const selection = window.getSelection();
         const hasSelection = selection && selection.toString().trim().length > 0;
-        console.log('[App] handleClickOutside: hasSelection:', hasSelection, 'hiding panel');
         if (!hasSelection) {
           setShowIcon(false);
           setShowPanel(false);
         }
-      } else {
-        console.log('[App] handleClickOutside: Inside UI, not hiding');
       }
     };
 

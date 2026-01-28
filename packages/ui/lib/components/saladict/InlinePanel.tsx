@@ -57,7 +57,6 @@ export const InlinePanel = ({
     if (!panel || !visible) return;
 
     const stopNativePropagation = (e: Event) => {
-      console.log('[InlinePanel] Stopping propagation for:', e.type, 'target:', e.target);
       e.stopPropagation();
     };
 
