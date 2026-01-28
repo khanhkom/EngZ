@@ -54,7 +54,7 @@ const Popup = () => {
 
   const { searchWord, results, errors, loading, activeTab, setActiveTab, currentWord } = useDictionaryStore();
   const { entries, loadHistory, addEntry } = useHistoryStore();
-  const { words, loadWords, removeWord } = useNotebookStore();
+  const { words, loadWords, addWord, removeWord } = useNotebookStore();
 
   useEffect(() => {
     // Load history and notebook on mount
@@ -107,6 +107,23 @@ const Popup = () => {
     setActiveView('search');
     await searchWord(word);
   };
+
+  const handleSaveToNotebook = async () => {
+    const result = results[activeTab];
+    if (result) {
+      await addWord({
+        word: result.word,
+        translation: result.translation,
+        pronunciation: result.pronunciation,
+        definition: result.definition,
+        examples: result.examples,
+        source: activeTab,
+      });
+      await loadWords();
+    }
+  };
+
+  const isWordSaved = currentWord ? words.some(w => w.word.toLowerCase() === currentWord.toLowerCase()) : false;
 
   return (
     <div className="h-[600px] w-[400px] bg-white">
@@ -255,14 +272,29 @@ const Popup = () => {
 
           {/* Dictionary Results */}
           {currentWord && (
-            <DictionaryTabs
-              activeTab={activeTab}
-              onTabChange={setActiveTab}
-              results={results}
-              errors={errors}
-              loading={loading}
-              onPlayAudio={handlePlayAudio}
-            />
+            <>
+              <DictionaryTabs
+                activeTab={activeTab}
+                onTabChange={setActiveTab}
+                results={results}
+                errors={errors}
+                loading={loading}
+                onPlayAudio={handlePlayAudio}
+              />
+              {results[activeTab] && (
+                <div className="flex justify-end">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleSaveToNotebook}
+                    disabled={isWordSaved}
+                    className={`gap-1 ${isWordSaved ? 'border-green-500 text-green-600' : 'border-blue-500 text-blue-600 hover:bg-blue-50'}`}>
+                    <BookMarked className="h-4 w-4" />
+                    {isWordSaved ? 'Saved' : 'Save'}
+                  </Button>
+                </div>
+              )}
+            </>
           )}
 
           {/* Empty State */}
