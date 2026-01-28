@@ -1,11 +1,11 @@
 {
   "extensionDescription": {
     "description": "Extension description",
-    "message": "Chrome extension boilerplate developed with Vite, React and Typescript"
+    "message": "Quick and easy dictionary lookup with Google, Bing, and Cambridge. Select text on any webpage to instantly translate and learn new words."
   },
   "extensionName": {
     "description": "Extension name",
-    "message": "Chrome extension boilerplate"
+    "message": "EngZ - Easy Dictionary"
   },
   "toggleTheme": {
     "message": "Toggle theme"

@@ -1,11 +1,11 @@
 {
   "extensionDescription": {
     "description": "Extension description",
-    "message": "React, Typescript, Vite를 사용한 크롬 익스텐션 보일러플레이트입니다."
+    "message": "Google, Bing, Cambridge 사전으로 빠르고 쉬운 단어 검색. 웹페이지에서 텍스트를 선택하여 즉시 번역하고 새로운 단어를 학습하세요."
   },
   "extensionName": {
     "description": "Extension name",
-    "message": "크롬 익스텐션 보일러플레이트"
+    "message": "EngZ - Easy Dictionary"
   },
   "toggleTheme": {
     "message": "테마 변경"
