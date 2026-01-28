@@ -25,20 +25,35 @@ export default function App() {
   const [isSaved, setIsSaved] = useState(false);
 
   useEffect(() => {
-    console.log('[Saladict] Content UI loaded');
+    console.log('[Saladict] Content UI mounted');
 
     const handleSelection = async () => {
       const selection = window.getSelection();
       const text = selection?.toString().trim();
+      console.log('[Saladict] Selection detected:', text);
 
       if (text && text.length > 0 && text.length < 100) {
         // Check settings first
-        const settings = await settingsStorage.get();
-        if (!settings.showFloatingIcon) return;
+        let showIconSetting = true;
+        try {
+          const settings = await settingsStorage.get();
+          console.log('[Saladict] Settings loaded:', settings);
+          showIconSetting = settings.showFloatingIcon;
+        } catch (error) {
+          console.warn('[Saladict] Failed to load settings, defaulting to true', error);
+        }
+
+        if (!showIconSetting) {
+          console.log('[Saladict] Icon disabled by settings');
+          return;
+        }
 
         const rect = getSelectionRect();
+        console.log('[Saladict] Selection Rect:', rect);
+
         if (rect) {
           const iconPos = calculateIconPosition(rect);
+          console.log('[Saladict] Setting icon position:', iconPos);
           setIconPosition(iconPos);
           setSelectedText(text);
           setShowIcon(true);
@@ -55,6 +70,7 @@ export default function App() {
 
     // Listen for text selection
     document.addEventListener('mouseup', handleSelection);
+    document.addEventListener('keyup', handleSelection);
     // document.addEventListener('selectionchange', handleSelection); // Too aggressive with async check
 
     // Listen for messages from background (Context Menu)
@@ -91,6 +107,7 @@ export default function App() {
 
     return () => {
       document.removeEventListener('mouseup', handleSelection);
+      document.removeEventListener('keyup', handleSelection);
       // document.removeEventListener('selectionchange', handleSelection);
       document.removeEventListener('mousedown', handleClickOutside);
       chrome.runtime.onMessage.removeListener(messageListener);

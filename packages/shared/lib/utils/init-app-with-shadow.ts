@@ -4,6 +4,14 @@ import type { ReactElement } from 'react';
 export const initAppWithShadow = ({ id, app, inlineCss }: { id: string; inlineCss: string; app: ReactElement }) => {
   const root = document.createElement('div');
   root.id = id;
+  // Ensure the container is on top but doesn't block interactions
+  root.style.position = 'absolute';
+  root.style.zIndex = '2147483647';
+  root.style.top = '0';
+  root.style.left = '0';
+  root.style.width = '0';
+  root.style.height = '0';
+  root.style.pointerEvents = 'none';
 
   document.body.append(root);
 

@@ -1,7 +1,7 @@
+import { cn } from '../../utils';
 import { Button } from '../ui/button';
 import { Card } from '../ui/card';
 import { Input } from '../ui/input';
-import { cn } from '@/lib/utils';
 import { X, Star, Volume2 } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';

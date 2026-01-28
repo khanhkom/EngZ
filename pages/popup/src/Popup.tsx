@@ -82,7 +82,7 @@ const Popup = () => {
       <div className="border-b border-gray-200 bg-gradient-to-r from-blue-500 to-blue-600 p-4">
         <h1 className="flex items-center gap-2 text-xl font-bold text-white">
           <Search className="h-5 w-5" />
-          Saladict
+          EngZ
         </h1>
       </div>
 
