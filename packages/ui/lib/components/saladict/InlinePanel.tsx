@@ -33,15 +33,9 @@ export const InlinePanel = ({
 }: InlinePanelProps) => {
   const panelRef = useRef<HTMLDivElement>(null);
 
-  // Handle click outside to close
+  // Handle Escape key to close
   useEffect(() => {
     if (!visible) return;
-
-    const handleClickOutside = (event: MouseEvent) => {
-      if (panelRef.current && !panelRef.current.contains(event.target as Node)) {
-        onClose();
-      }
-    };
 
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
@@ -49,18 +43,35 @@ export const InlinePanel = ({
       }
     };
 
-    // Delay adding listener to avoid immediate close
-    const timeoutId = setTimeout(() => {
-      document.addEventListener('mousedown', handleClickOutside);
-      document.addEventListener('keydown', handleEscape);
-    }, 100);
+    document.addEventListener('keydown', handleEscape);
 
     return () => {
-      clearTimeout(timeoutId);
-      document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('keydown', handleEscape);
     };
   }, [visible, onClose]);
+
+  // Stop native events from propagating to document listeners
+  // React synthetic events don't fully prevent native event bubbling in Shadow DOM
+  useEffect(() => {
+    const panel = panelRef.current;
+    if (!panel || !visible) return;
+
+    const stopNativePropagation = (e: Event) => {
+      console.log('[InlinePanel] Stopping propagation for:', e.type, 'target:', e.target);
+      e.stopPropagation();
+    };
+
+    // Use bubble phase (default) so child elements can still receive clicks
+    panel.addEventListener('mouseup', stopNativePropagation);
+    panel.addEventListener('mousedown', stopNativePropagation);
+    panel.addEventListener('click', stopNativePropagation);
+
+    return () => {
+      panel.removeEventListener('mouseup', stopNativePropagation);
+      panel.removeEventListener('mousedown', stopNativePropagation);
+      panel.removeEventListener('click', stopNativePropagation);
+    };
+  }, [visible]);
 
   // Calculate position to stay within viewport
   useEffect(() => {
@@ -90,16 +101,20 @@ export const InlinePanel = ({
   return (
     <Card
       ref={panelRef}
+      data-saladict-ui
       className={cn(
         'absolute z-[2147483646] max-h-[500px] w-[380px] overflow-hidden',
         'border-gray-200 shadow-xl',
         'animate-scale-in',
+        'pointer-events-auto',
       )}
       style={{
         left: `${position.x}px`,
-        top: `${position.y + 10}px`,
-        transform: 'translateX(-50%)',
-      }}>
+        top: `${position.y}px`,
+      }}
+      onClick={e => e.stopPropagation()}
+      onMouseUp={e => e.stopPropagation()}
+      onMouseDown={e => e.stopPropagation()}>
       {/* Header */}
       <div className="flex items-center gap-2 border-b border-gray-100 p-3">
         <Input

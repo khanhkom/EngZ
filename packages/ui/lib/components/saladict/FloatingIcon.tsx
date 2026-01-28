@@ -10,6 +10,7 @@ export interface FloatingIconProps {
 export const FloatingIcon = ({ position, visible, onClick }: FloatingIconProps) => (
   <button
     type="button"
+    data-saladict-ui
     className={cn(
       'absolute z-[2147483647] flex h-8 w-8 items-center justify-center',
       'rounded-md text-white shadow-lg',
@@ -26,7 +27,10 @@ export const FloatingIcon = ({ position, visible, onClick }: FloatingIconProps) 
     }}
     onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#2563eb')}
     onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#3b82f6')}
-    onClick={onClick}
+    onClick={e => {
+      e.stopPropagation();
+      onClick();
+    }}
     aria-label="Look up word">
     <Droplet className="h-4 w-4" fill="currentColor" strokeWidth={0} />
   </button>

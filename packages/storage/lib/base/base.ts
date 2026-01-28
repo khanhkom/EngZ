@@ -8,6 +8,19 @@ import type { BaseStorageType, StorageConfigType, ValueOrUpdateType } from './ty
 const chrome = globalThis.chrome;
 
 /**
+ * Checks if the extension context is still valid.
+ * Returns false if the extension was reloaded/updated/disabled.
+ */
+const isExtensionContextValid = (): boolean => {
+  try {
+    // Accessing chrome.runtime.id throws if context is invalidated
+    return !!chrome?.runtime?.id;
+  } catch {
+    return false;
+  }
+};
+
+/**
  * Sets or updates an arbitrary cache with a new value or the result of an update function.
  */
 const updateCache = async <D>(valueOrUpdate: ValueOrUpdateType<D>, cache: D | null): Promise<D> => {
@@ -89,24 +102,50 @@ export const createStorage = <D = string>(
 
   // Register life cycle methods
   const get = async (): Promise<D> => {
-    checkStoragePermission(storageEnum);
-    const value = await chrome?.storage[storageEnum].get([key]);
-
-    if (!value) {
-      return fallback;
+    if (!isExtensionContextValid()) {
+      console.warn(`[Storage] Extension context invalidated, returning fallback for key: ${key}`);
+      return cache ?? fallback;
     }
+    checkStoragePermission(storageEnum);
+    try {
+      const value = await chrome?.storage[storageEnum].get([key]);
 
-    return deserialize(value[key]) ?? fallback;
+      if (!value) {
+        return fallback;
+      }
+
+      return deserialize(value[key]) ?? fallback;
+    } catch (error) {
+      // Handle extension context invalidated error gracefully
+      if (error instanceof Error && error.message.includes('Extension context invalidated')) {
+        console.warn(`[Storage] Extension context invalidated during get for key: ${key}`);
+        return cache ?? fallback;
+      }
+      throw error;
+    }
   };
 
   const set = async (valueOrUpdate: ValueOrUpdateType<D>) => {
+    if (!isExtensionContextValid()) {
+      console.warn(`[Storage] Extension context invalidated, skipping set for key: ${key}`);
+      return;
+    }
     if (!initialCache) {
       cache = await get();
     }
     cache = await updateCache(valueOrUpdate, cache);
 
-    await chrome?.storage[storageEnum].set({ [key]: serialize(cache) });
-    _emitChange();
+    try {
+      await chrome?.storage[storageEnum].set({ [key]: serialize(cache) });
+      _emitChange();
+    } catch (error) {
+      // Handle extension context invalidated error gracefully
+      if (error instanceof Error && error.message.includes('Extension context invalidated')) {
+        console.warn(`[Storage] Extension context invalidated during set for key: ${key}`);
+        return;
+      }
+      throw error;
+    }
   };
 
   const subscribe = (listener: () => void) => {
@@ -137,14 +176,22 @@ export const createStorage = <D = string>(
     _emitChange();
   };
 
-  get().then(data => {
-    cache = data;
-    initialCache = true;
-    _emitChange();
-  });
+  get()
+    .then(data => {
+      cache = data;
+      initialCache = true;
+      _emitChange();
+    })
+    .catch(error => {
+      if (error instanceof Error && error.message.includes('Extension context invalidated')) {
+        console.warn(`[Storage] Extension context invalidated during initial load for key: ${key}`);
+      } else {
+        console.error(`[Storage] Failed to load initial cache for key: ${key}`, error);
+      }
+    });
 
   // Register listener for live updates for our storage area
-  if (liveUpdate) {
+  if (liveUpdate && isExtensionContextValid()) {
     chrome?.storage[storageEnum].onChanged.addListener(_updateFromStorageOnChanged);
   }
 

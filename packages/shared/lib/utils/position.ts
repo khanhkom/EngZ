@@ -49,7 +49,8 @@ export const calculateIconPosition = (selectionRect: SelectionRect, offset = 8):
 };
 
 /**
- * Calculate panel position (below icon, centered, with viewport constraints)
+ * Calculate panel position with smart placement (auto-detect best position)
+ * Priority: below > above > right > left of icon
  */
 export const calculatePanelPosition = (iconPosition: Position, panelWidth: number, panelHeight: number): Position => {
   const viewportWidth = window.innerWidth;
@@ -57,23 +58,55 @@ export const calculatePanelPosition = (iconPosition: Position, panelWidth: numbe
   const scrollX = window.scrollX;
   const scrollY = window.scrollY;
 
-  let x = iconPosition.x - panelWidth / 2;
-  let y = iconPosition.y + 40; // 40px below icon
+  const padding = 10;
+  const iconOffset = 45; // Distance from icon
 
-  // Constrain to viewport horizontally
-  const minX = scrollX + 10;
-  const maxX = scrollX + viewportWidth - panelWidth - 10;
-  x = Math.max(minX, Math.min(x, maxX));
+  // Calculate icon position relative to viewport
+  const iconViewportX = iconPosition.x - scrollX;
+  const iconViewportY = iconPosition.y - scrollY;
 
-  // Constrain to viewport vertically
-  const minY = scrollY + 10;
-  const maxY = scrollY + viewportHeight - panelHeight - 10;
+  // Available space in each direction
+  const spaceBelow = viewportHeight - iconViewportY - iconOffset;
+  const spaceAbove = iconViewportY - iconOffset;
+  const spaceRight = viewportWidth - iconViewportX;
+  const spaceLeft = iconViewportX;
 
-  // If panel would go below viewport, show it above the icon instead
-  if (y + panelHeight > maxY) {
-    y = iconPosition.y - panelHeight - 40;
+  let x: number;
+  let y: number;
+
+  // Try below first (preferred)
+  if (spaceBelow >= panelHeight + padding) {
+    y = iconPosition.y + iconOffset;
+    x = iconPosition.x - panelWidth / 2;
+  }
+  // Try above
+  else if (spaceAbove >= panelHeight + padding) {
+    y = iconPosition.y - panelHeight - iconOffset;
+    x = iconPosition.x - panelWidth / 2;
+  }
+  // Try right side
+  else if (spaceRight >= panelWidth + padding) {
+    x = iconPosition.x + 20;
+    y = iconPosition.y - panelHeight / 2;
+  }
+  // Try left side
+  else if (spaceLeft >= panelWidth + padding) {
+    x = iconPosition.x - panelWidth - 20;
+    y = iconPosition.y - panelHeight / 2;
+  }
+  // Fallback: center in viewport
+  else {
+    x = scrollX + (viewportWidth - panelWidth) / 2;
+    y = scrollY + (viewportHeight - panelHeight) / 2;
   }
 
+  // Final constraint to ensure panel stays within viewport
+  const minX = scrollX + padding;
+  const maxX = scrollX + viewportWidth - panelWidth - padding;
+  const minY = scrollY + padding;
+  const maxY = scrollY + viewportHeight - panelHeight - padding;
+
+  x = Math.max(minX, Math.min(x, maxX));
   y = Math.max(minY, Math.min(y, maxY));
 
   return { x, y };
