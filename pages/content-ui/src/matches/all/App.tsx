@@ -38,7 +38,8 @@ export default function App() {
         try {
           const settings = await settingsStorage.get();
           console.log('[Saladict] Settings loaded:', settings);
-          showIconSetting = settings.showFloatingIcon;
+          // Use nullish coalescing to default to true if undefined
+          showIconSetting = settings?.showFloatingIcon ?? true;
         } catch (error) {
           console.warn('[Saladict] Failed to load settings, defaulting to true', error);
         }
@@ -94,22 +95,28 @@ export default function App() {
     };
     chrome.runtime.onMessage.addListener(messageListener);
 
-    // Hide icon/panel when clicking outside
+    // Hide icon/panel when clicking outside (only if no text is selected)
     const handleClickOutside = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       if (!target.closest('[data-saladict-ui]')) {
-        setShowIcon(false);
-        setShowPanel(false);
+        // Don't hide if user just selected text (selection will be handled by handleSelection)
+        const selection = window.getSelection();
+        const hasSelection = selection && selection.toString().trim().length > 0;
+        if (!hasSelection) {
+          setShowIcon(false);
+          setShowPanel(false);
+        }
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    // Use 'click' instead of 'mousedown' to avoid race condition with text selection
+    document.addEventListener('click', handleClickOutside);
 
     return () => {
       document.removeEventListener('mouseup', handleSelection);
       document.removeEventListener('keyup', handleSelection);
       // document.removeEventListener('selectionchange', handleSelection);
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('click', handleClickOutside);
       chrome.runtime.onMessage.removeListener(messageListener);
     };
   }, [addEntry, searchWord]);
