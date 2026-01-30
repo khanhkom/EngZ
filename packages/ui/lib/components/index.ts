@@ -4,3 +4,4 @@ export * from './error-display/ErrorDisplay';
 export * from './ui';
 export * from './saladict';
 export * from './icons';
+export * from './auth';

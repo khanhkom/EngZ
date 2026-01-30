@@ -3,6 +3,7 @@ import {
   useDictionaryStore,
   useHistoryStore,
   useNotebookStore,
+  useAuthStore,
   playAudioWithAutoDetect,
   withErrorBoundary,
   withSuspense,
@@ -25,8 +26,13 @@ import {
   Settings,
   ErrorDisplay,
   LoadingSpinner,
+  User,
+  LoginForm,
+  SignUpForm,
+  UserProfile,
 } from '@extension/ui';
 import { useEffect, useState } from 'react';
+import type { NotebookEntryStatus } from '@extension/storage';
 
 interface SettingsState {
   targetLanguage: 'vi' | 'en' | 'ja' | 'ko' | 'zh' | 'fr' | 'de' | 'es';
@@ -46,25 +52,45 @@ const DEFAULT_SETTINGS: SettingsState = {
   showFloatingIcon: true,
 };
 
+const STATUS_COLORS: Record<NotebookEntryStatus, string> = {
+  NEW: 'bg-gray-100 text-gray-700',
+  LEARNING: 'bg-yellow-100 text-yellow-700',
+  MASTERED: 'bg-green-100 text-green-700',
+};
+
 const Popup = () => {
   const [searchInput, setSearchInput] = useState('');
-  const [activeView, setActiveView] = useState<'search' | 'history' | 'notebook'>('search');
+  const [activeView, setActiveView] = useState<'search' | 'history' | 'notebook' | 'profile'>('search');
   const [showSettings, setShowSettings] = useState(false);
   const [settings, setSettings] = useState<SettingsState>(DEFAULT_SETTINGS);
+  const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
 
   const { searchWord, results, errors, loading, activeTab, setActiveTab, currentWord } = useDictionaryStore();
   const { entries, loadHistory, addEntry } = useHistoryStore();
-  const { words, loadWords, addWord, removeWord } = useNotebookStore();
+  const { words, loadWords, addWord, removeWord, updateWordStatus, syncing } = useNotebookStore();
+  const {
+    user,
+    isAuthenticated,
+    login,
+    signUp,
+    logout,
+    forgotPassword,
+    loading: authLoading,
+    error: authError,
+    init: initAuth,
+    clearError,
+  } = useAuthStore();
 
   useEffect(() => {
     // Load history and notebook on mount
     loadHistory();
     loadWords();
+    initAuth();
     // Load settings
     settingsStorage.get().then((s: SettingsState) => {
       if (s) setSettings(s);
     });
-  }, [loadHistory, loadWords]);
+  }, [loadHistory, loadWords, initAuth]);
 
   const handleSettingChange = async <K extends keyof SettingsState>(key: K, value: SettingsState[K]) => {
     const newSettings = { ...settings, [key]: value };
@@ -123,6 +149,40 @@ const Popup = () => {
     }
   };
 
+  const handleStatusChange = async (wordId: string, status: NotebookEntryStatus) => {
+    await updateWordStatus(wordId, status);
+  };
+
+  const handleLogin = async (email: string, password: string) => {
+    try {
+      await login({ email, password });
+    } catch {
+      // Error is handled by the store
+    }
+  };
+
+  const handleSignUp = async (data: { email: string; password: string; firstName: string; lastName: string }) => {
+    try {
+      await signUp(data);
+    } catch {
+      // Error is handled by the store
+    }
+  };
+
+  const handleForgotPassword = async (email: string) => {
+    try {
+      await forgotPassword(email);
+      alert('Password reset email sent. Please check your inbox.');
+    } catch {
+      // Error is handled by the store
+    }
+  };
+
+  const handleSwitchAuthMode = () => {
+    clearError();
+    setAuthMode(authMode === 'login' ? 'signup' : 'login');
+  };
+
   const isWordSaved = currentWord ? words.some(w => w.word.toLowerCase() === currentWord.toLowerCase()) : false;
 
   return (
@@ -133,6 +193,7 @@ const Popup = () => {
           <h1 className="flex items-center gap-2 text-xl font-bold text-white">
             <Search className="h-5 w-5" />
             EngZ
+            {syncing && <span className="ml-2 text-xs font-normal opacity-75">Syncing...</span>}
           </h1>
           <Button
             variant="ghost"
@@ -239,7 +300,7 @@ const Popup = () => {
 
       {/* Navigation Tabs */}
       <Tabs value={activeView} onValueChange={v => setActiveView(v as typeof activeView)} className="flex-1">
-        <TabsList className="grid w-full grid-cols-3 rounded-none border-b">
+        <TabsList className="grid w-full grid-cols-4 rounded-none border-b">
           <TabsTrigger value="search" className="gap-2">
             <Search className="h-4 w-4" />
             Search
@@ -251,6 +312,10 @@ const Popup = () => {
           <TabsTrigger value="notebook" className="gap-2">
             <BookMarked className="h-4 w-4" />
             Notebook
+          </TabsTrigger>
+          <TabsTrigger value="profile" className="gap-2">
+            <User className="h-4 w-4" />
+            Profile
           </TabsTrigger>
         </TabsList>
 
@@ -361,9 +426,24 @@ const Popup = () => {
                         <div className="font-medium text-gray-900">{word.word}</div>
                         {word.pronunciation && <div className="mt-0.5 text-xs text-gray-500">{word.pronunciation}</div>}
                         {word.translation && <div className="mt-1 text-sm text-gray-700">{word.translation}</div>}
-                        <Badge variant="secondary" className="mt-2 text-xs">
-                          {word.source}
-                        </Badge>
+                        <div className="mt-2 flex items-center gap-2">
+                          <Badge variant="secondary" className="text-xs">
+                            {word.source}
+                          </Badge>
+                          {/* Word Status Dropdown */}
+                          <select
+                            value={word.status}
+                            onChange={e => {
+                              e.stopPropagation();
+                              handleStatusChange(word.id, e.target.value as NotebookEntryStatus);
+                            }}
+                            onClick={e => e.stopPropagation()}
+                            className={`rounded px-2 py-0.5 text-xs font-medium ${STATUS_COLORS[word.status]} cursor-pointer border-0 focus:outline-none focus:ring-1 focus:ring-blue-500`}>
+                            <option value="NEW">New</option>
+                            <option value="LEARNING">Learning</option>
+                            <option value="MASTERED">Mastered</option>
+                          </select>
+                        </div>
                       </div>
                       <Button
                         variant="ghost"
@@ -379,6 +459,32 @@ const Popup = () => {
                   </CardContent>
                 </Card>
               ))}
+            </div>
+          )}
+        </TabsContent>
+
+        {/* Profile View */}
+        <TabsContent value="profile" className="h-[500px] overflow-y-auto p-4">
+          {isAuthenticated && user ? (
+            <UserProfile user={user} onLogout={logout} wordCount={words.length} />
+          ) : (
+            <div className="flex h-full items-center justify-center">
+              {authMode === 'login' ? (
+                <LoginForm
+                  onLogin={handleLogin}
+                  onSignUp={handleSwitchAuthMode}
+                  onForgotPassword={handleForgotPassword}
+                  loading={authLoading}
+                  error={authError}
+                />
+              ) : (
+                <SignUpForm
+                  onSignUp={handleSignUp}
+                  onLogin={handleSwitchAuthMode}
+                  loading={authLoading}
+                  error={authError}
+                />
+              )}
             </div>
           )}
         </TabsContent>
