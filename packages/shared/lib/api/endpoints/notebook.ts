@@ -34,45 +34,45 @@ const notebookApi = {
    * GET /shared/notebook
    */
   list: (params: NotebookSyncParams = {}) =>
-    apiClient.get<PaginatedResponse<ApiNotebookEntry>>(`/shared/notebook${buildQueryString(params)}`),
+    apiClient.get<PaginatedResponse<ApiNotebookEntry>>(`/notebook/list${buildQueryString(params)}`),
 
   /**
    * Get a single notebook entry by ID
    * GET /shared/notebook/:id
    */
-  get: (id: string) => apiClient.get<ApiResponse<ApiNotebookEntry>>(`/shared/notebook/${id}`),
+  get: (id: string) => apiClient.get<ApiResponse<ApiNotebookEntry>>(`/notebook/get/${id}`),
 
   /**
    * Create a new notebook entry
    * POST /shared/notebook
    */
-  create: (data: CreateNotebookEntryRequest) => apiClient.post<ApiResponse<ApiNotebookEntry>>('/shared/notebook', data),
+  create: (data: CreateNotebookEntryRequest) => apiClient.post<ApiResponse<ApiNotebookEntry>>('/notebook/create', data),
 
   /**
    * Create multiple notebook entries at once
    * POST /shared/notebook/bulk
    */
   bulkCreate: (data: BulkCreateNotebookRequest) =>
-    apiClient.post<ApiResponse<BulkCreateNotebookResponse>>('/shared/notebook/bulk', data),
+    apiClient.post<ApiResponse<BulkCreateNotebookResponse>>('/notebook/bulk', data),
 
   /**
    * Update an existing notebook entry
    * PATCH /shared/notebook/:id
    */
   update: (id: string, data: UpdateNotebookEntryRequest) =>
-    apiClient.patch<ApiResponse<ApiNotebookEntry>>(`/shared/notebook/${id}`, data),
+    apiClient.patch<ApiResponse<ApiNotebookEntry>>(`/notebook/${id}`, data),
 
   /**
    * Soft delete a notebook entry
    * DELETE /shared/notebook/:id
    */
-  delete: (id: string) => apiClient.delete<ApiResponse<DeleteNotebookEntryResponse>>(`/shared/notebook/${id}`),
+  delete: (id: string) => apiClient.delete<ApiResponse<DeleteNotebookEntryResponse>>(`/notebook/delete/${id}`),
 
   /**
    * Restore a soft-deleted notebook entry
    * POST /shared/notebook/:id/restore
    */
-  restore: (id: string) => apiClient.post<ApiResponse<RestoreNotebookEntryResponse>>(`/shared/notebook/${id}/restore`),
+  restore: (id: string) => apiClient.post<ApiResponse<RestoreNotebookEntryResponse>>(`/notebook/${id}/restore`),
 };
 
 export { notebookApi };

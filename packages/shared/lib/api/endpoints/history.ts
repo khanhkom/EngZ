@@ -30,26 +30,26 @@ const historyApi = {
    * GET /shared/history
    */
   list: (params: HistoryListParams = {}) =>
-    apiClient.get<PaginatedResponse<ApiHistoryEntry>>(`/shared/history${buildQueryString(params)}`),
+    apiClient.get<PaginatedResponse<ApiHistoryEntry>>(`/history/list${buildQueryString(params)}`),
 
   /**
    * Log a search query to history
    * POST /shared/history
    * Note: This is designed for fire-and-forget usage
    */
-  log: (data: LogHistoryRequest) => apiClient.post<ApiResponse<ApiHistoryEntry>>('/shared/history', data),
+  log: (data: LogHistoryRequest) => apiClient.post<ApiResponse<ApiHistoryEntry>>('/history/create', data),
 
   /**
    * Clear all history entries
    * DELETE /shared/history
    */
-  clear: () => apiClient.delete<ApiResponse<ClearHistoryResponse>>('/shared/history'),
+  clear: () => apiClient.delete<ApiResponse<ClearHistoryResponse>>('/history'),
 
   /**
    * Delete a single history entry
    * DELETE /shared/history/:id
    */
-  delete: (id: string) => apiClient.delete<ApiResponse<DeleteHistoryResponse>>(`/shared/history/${id}`),
+  delete: (id: string) => apiClient.delete<ApiResponse<DeleteHistoryResponse>>(`/history/delete/${id}`),
 };
 
 export { historyApi };

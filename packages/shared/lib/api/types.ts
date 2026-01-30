@@ -177,7 +177,7 @@ export interface ForgotPasswordRequest {
 
 // ============ Notebook Types ============
 
-export type NotebookEntryStatus = 'NEW' | 'LEARNING' | 'MASTERED';
+export type NotebookEntryStatus = 'new' | 'learning' | 'mastered';
 
 export interface ApiNotebookEntry {
   id: string;

@@ -1,6 +1,6 @@
 import { createStorage, StorageEnum } from '../base/index.js';
 
-type NotebookEntryStatus = 'NEW' | 'LEARNING' | 'MASTERED';
+type NotebookEntryStatus = 'new' | 'learning' | 'mastered';
 type SyncStatus = 'synced' | 'pending_create' | 'pending_update' | 'pending_delete';
 
 interface SavedWord {
@@ -74,7 +74,7 @@ export const notebookStorage: NotebookStorageType = {
       newWord = {
         ...word,
         id: crypto.randomUUID(),
-        status: 'NEW',
+        status: 'new',
         savedAt: now,
         updatedAt: now,
         syncStatus: 'pending_create',
